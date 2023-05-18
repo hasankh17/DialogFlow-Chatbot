@@ -1,0 +1,73 @@
+using Google.Cloud.Dialogflow.V2;
+using Google.Protobuf;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Text;
+using System.Text.Json.Nodes;
+using WebHookAPI.Repository;
+using static Google.Rpc.Context.AttributeContext.Types;
+
+namespace WebHookAPI.Controllers
+{
+    [ApiController]
+   // [Route("webhook")]
+    public class WebhookController : Controller
+    {
+        //private static readonly JsonParser jsonParser = new JsonParser(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+        private static readonly JsonParser jsonParser = new JsonParser(JsonParser.Settings.Default.WithIgnoreUnknownFields(true));
+        private readonly IConversationBot _conversationBot;
+
+        public WebhookController(IConversationBot conversationBot)
+        {
+            _conversationBot = conversationBot;
+
+        }
+        [HttpPost("get-order-details")]
+        public async Task<ActionResult> GetWebhookResponse()
+        {
+            //WebhookRequest request;
+            //using (var reader = new StreamReader(Request.Body))
+            //{
+            //    request = jsonParser.Parse<WebhookRequest>(reader);
+            //}
+
+            string requestJson;
+            using (TextReader reader = new StreamReader(Request.Body))
+            {
+                requestJson = await reader.ReadToEndAsync();
+            }
+
+            WebhookRequest request = jsonParser.Parse<WebhookRequest>(requestJson);
+
+            var pas = request.QueryResult.Parameters;
+           
+            var askingOrderId = pas.Fields.ContainsKey("OrderId") && pas.Fields["OrderId"].ToString().Replace('\"', ' ').Trim().Length > 0;
+
+            //var askingshipmentDate = pas.Fields.ContainsKey("shipment-Date") && pas.Fields["shipment-Date"].ToString().Replace('\"', ' ').Trim().Length > 0;
+            var askingDate = pas.Fields.ContainsKey("date") && pas.Fields["date"].ToString().Replace('\"', ' ').Trim().Length > 0;
+ 
+            var response = new WebhookResponse();
+        
+          
+            StringBuilder sb = new StringBuilder();
+
+            if (askingOrderId)
+            {
+                //sb.Append("Your Order with Id: " + OrderId + "");
+                sb.Append("Your Order with Id: " + _conversationBot.GetOrderId() + " ");
+            }
+
+            if (askingDate)
+            {
+                sb.Append("will be shipped on : " + DateTime.UtcNow);
+                //sb.Append("will be shipped on : " + _conversationBot.GetShpmentDate());
+            }
+
+            string responseJson = response.FulfillmentText = sb.ToString();
+            return Json(response);
+
+            //string responseJson = response.ToString();
+            //return Content(responseJson, "application/json");
+        }
+    }
+}
