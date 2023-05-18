@@ -1,0 +1,27 @@
+using WebHookAPI.Models;
+
+namespace WebHookAPI.Repository
+{
+    public interface IConversationBot
+    {
+        //Task<TestBot> GetOrderId(int OrderId);
+        //Task<TestBot> GetShpmentDate(DateTime shipmentDate);
+
+        string GetOrderId();
+       // string GetShpmentDate();
+
+    }
+    public class ConversationBot : IConversationBot
+    {
+        public  string GetOrderId()
+        {
+            return "31313";
+        }
+
+        //public string GetShpmentDate()
+        //{
+        //    return "2022-08-18T21:31:25.565Z";
+        //}
+    }
+
+}
